@@ -1,5 +1,6 @@
 const router = require('express').Router()
-const { Note } = require('../models')
+const { Note, User } = require('../models')
+const { tokenExtractor } = require('../util/middleware')
 
 const noteFinder = async (req, res, next) => {
   req.note = await Note.findByPk(req.params.id)
@@ -10,17 +11,29 @@ const noteFinder = async (req, res, next) => {
 }
 
 router.get('/', async (req, res) => {
-  const notes = await Note.findAll()
+  const notes = await Note.findAll({
+    attributes: { exclude: ['userId'] },
+    include: {
+      model: User,
+      attributes: ['name'],
+    },
+  })
   res.json(notes)
 })
 
-router.post('/', async (req, res) => {
-  try {
-    const note = await Note.create({ ...req.body, date: new Date() })
-    res.json(note)
-  } catch (error) {
-    return res.status(400).json({ error })
+router.post('/', tokenExtractor, async (req, res) => {
+  const user = await User.findByPk(req.decodedToken.id)
+  if (!user) {
+    return res.status(401).json({ error: 'user not found' })
   }
+
+  const note = await Note.create({
+    ...req.body,
+    date: new Date(),
+    userId: user.id,
+  })
+
+  res.json(note)
 })
 
 router.get('/:id', noteFinder, (req, res) => {
