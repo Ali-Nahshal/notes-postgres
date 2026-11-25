@@ -4,17 +4,31 @@ const { tokenExtractor, isAdmin } = require('../util/middleware')
 
 router.get('/', async (req, res) => {
   const users = await User.findAll({
-    include: {
-      model: Note,
-      attributes: {
-        exclude: ['userId'],
+    include: [
+      {
+        model: Note,
+        attributes: { exclude: ['userId'] },
       },
-      model: Team,
-      attributes: ['name', 'id'],
-      through: {
-        attributes: [],
+      {
+        model: Note,
+        as: 'markedNotes',
+        attributes: { exclude: ['userId'] },
+        through: {
+          attributes: [],
+        },
+        include: {
+          model: User,
+          attributes: ['name'],
+        },
       },
-    },
+      {
+        model: Team,
+        attributes: ['name', 'id'],
+        through: {
+          attributes: [],
+        },
+      },
+    ],
   })
   res.json(users)
 })
@@ -25,7 +39,35 @@ router.post('/', async (req, res) => {
 })
 
 router.get('/:id', async (req, res) => {
-  const user = await User.findByPk(req.params.id)
+  const user = await User.findByPk(req.params.id, {
+    attributes: { exclude: [''] },
+    include: [
+      {
+        model: Note,
+        attributes: { exclude: ['userId'] },
+      },
+      {
+        model: Note,
+        as: 'markedNotes',
+        attributes: { exclude: ['userId'] },
+        through: {
+          attributes: [],
+        },
+        include: {
+          model: User,
+          attributes: ['name'],
+        },
+      },
+      {
+        model: Team,
+        attributes: ['name', 'id'],
+        through: {
+          attributes: [],
+        },
+      },
+    ],
+  })
+
   if (user) {
     res.json(user)
   } else {
