@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const { User, Note } = require('../models')
+const { User, Note, Team } = require('../models')
 const { tokenExtractor, isAdmin } = require('../util/middleware')
 
 router.get('/', async (req, res) => {
@@ -8,6 +8,11 @@ router.get('/', async (req, res) => {
       model: Note,
       attributes: {
         exclude: ['userId'],
+      },
+      model: Team,
+      attributes: ['name', 'id'],
+      through: {
+        attributes: [],
       },
     },
   })
